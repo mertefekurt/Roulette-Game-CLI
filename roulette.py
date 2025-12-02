@@ -17,6 +17,12 @@ class Player:
     def subtract_balance(self, amount):
         self.balance -= amount
 
+class Bet:
+    def __init__(self, bet_type, value, amount):
+        self.bet_type = bet_type
+        self.value = value
+        self.amount = amount
+
 def main():
     print("welcome to roulette!")
 
