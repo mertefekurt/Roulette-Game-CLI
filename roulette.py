@@ -76,8 +76,95 @@ def calculate_payout(bet, winning_number):
         return bet.amount * 2
     return 0
 
+def display_menu():
+    print("\nbetting options:")
+    print("1. number (0-36) - payout: 36x")
+    print("2. color (red/black) - payout: 2x")
+    print("3. odd/even - payout: 2x")
+    print("4. high/low - payout: 2x")
+    print("5. quit")
+
+def get_bet_from_user():
+    choice = input("select bet type (1-5): ").strip()
+    
+    if choice == "5":
+        return None
+    
+    if choice not in ["1", "2", "3", "4"]:
+        print("invalid choice")
+        return None
+    
+    amount = input("enter bet amount: ").strip()
+    try:
+        amount = int(amount)
+        if amount <= 0:
+            print("bet amount must be positive")
+            return None
+    except ValueError:
+        print("invalid bet amount")
+        return None
+    
+    if choice == "1":
+        number = input("enter number (0-36): ").strip()
+        try:
+            number = int(number)
+            if number < 0 or number > 36:
+                print("number must be between 0 and 36")
+                return None
+            return Bet("number", number, amount)
+        except ValueError:
+            print("invalid number")
+            return None
+    elif choice == "2":
+        color = input("enter color (red/black): ").strip().lower()
+        if color not in ["red", "black"]:
+            print("color must be red or black")
+            return None
+        return Bet("color", color, amount)
+    elif choice == "3":
+        oe = input("enter odd or even: ").strip().lower()
+        if oe not in ["odd", "even"]:
+            print("must be odd or even")
+            return None
+        return Bet(oe, None, amount)
+    elif choice == "4":
+        hl = input("enter high or low: ").strip().lower()
+        if hl not in ["high", "low"]:
+            print("must be high or low")
+            return None
+        return Bet(hl, None, amount)
+    
+    return None
+
 def main():
     print("welcome to roulette!")
+    player = Player()
+    
+    while True:
+        print(f"\ncurrent balance: ${player.get_balance()}")
+        display_menu()
+        bet = get_bet_from_user()
+        
+        if bet is None:
+            print("thanks for playing!")
+            break
+        
+        if bet.amount > player.get_balance():
+            print("insufficient balance")
+            continue
+        
+        player.subtract_balance(bet.amount)
+        winning_number = spin_wheel()
+        color = get_number_color(winning_number)
+        
+        print(f"\nspinning... the ball lands on {winning_number} ({color})")
+        
+        payout = calculate_payout(bet, winning_number)
+        if payout > 0:
+            print(f"you win ${payout}!")
+            player.add_balance(payout)
+        else:
+            print("you lose!")
 
 if __name__ == "__main__":
     main()
