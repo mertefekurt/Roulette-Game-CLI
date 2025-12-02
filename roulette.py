@@ -140,31 +140,52 @@ def main():
     print("welcome to roulette!")
     player = Player()
     
-    while True:
-        print(f"\ncurrent balance: ${player.get_balance()}")
-        display_menu()
-        bet = get_bet_from_user()
-        
-        if bet is None:
-            print("thanks for playing!")
-            break
-        
-        if bet.amount > player.get_balance():
-            print("insufficient balance")
-            continue
-        
-        player.subtract_balance(bet.amount)
-        winning_number = spin_wheel()
-        color = get_number_color(winning_number)
-        
-        print(f"\nspinning... the ball lands on {winning_number} ({color})")
-        
-        payout = calculate_payout(bet, winning_number)
-        if payout > 0:
-            print(f"you win ${payout}!")
-            player.add_balance(payout)
-        else:
-            print("you lose!")
+    try:
+        while True:
+            if player.get_balance() <= 0:
+                print("\ngame over! you're out of money.")
+                break
+            
+            print(f"\ncurrent balance: ${player.get_balance()}")
+            display_menu()
+            
+            try:
+                bet = get_bet_from_user()
+            except KeyboardInterrupt:
+                print("\n\ngame interrupted. thanks for playing!")
+                break
+            except Exception as e:
+                print(f"error: {str(e)}")
+                continue
+            
+            if bet is None:
+                print("thanks for playing!")
+                break
+            
+            if bet.amount > player.get_balance():
+                print("insufficient balance")
+                continue
+            
+            if bet.amount <= 0:
+                print("bet amount must be positive")
+                continue
+            
+            player.subtract_balance(bet.amount)
+            winning_number = spin_wheel()
+            color = get_number_color(winning_number)
+            
+            print(f"\nspinning... the ball lands on {winning_number} ({color})")
+            
+            payout = calculate_payout(bet, winning_number)
+            if payout > 0:
+                print(f"you win ${payout}!")
+                player.add_balance(payout)
+            else:
+                print("you lose!")
+    except KeyboardInterrupt:
+        print("\n\ngame interrupted. thanks for playing!")
+    except Exception as e:
+        print(f"\nunexpected error: {str(e)}")
 
 if __name__ == "__main__":
     main()
