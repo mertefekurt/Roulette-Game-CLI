@@ -136,15 +136,14 @@ def get_bet_from_user():
     
     return None
 
-def main():
-    print("welcome to roulette!")
+def play_game():
     player = Player()
     
     try:
         while True:
             if player.get_balance() <= 0:
                 print("\ngame over! you're out of money.")
-                break
+                return True
             
             print(f"\ncurrent balance: ${player.get_balance()}")
             display_menu()
@@ -153,14 +152,14 @@ def main():
                 bet = get_bet_from_user()
             except KeyboardInterrupt:
                 print("\n\ngame interrupted. thanks for playing!")
-                break
+                return False
             except Exception as e:
                 print(f"error: {str(e)}")
                 continue
             
             if bet is None:
                 print("thanks for playing!")
-                break
+                return True
             
             if bet.amount > player.get_balance():
                 print("insufficient balance")
@@ -184,8 +183,28 @@ def main():
                 print("you lose!")
     except KeyboardInterrupt:
         print("\n\ngame interrupted. thanks for playing!")
+        return False
     except Exception as e:
         print(f"\nunexpected error: {str(e)}")
+        return False
+
+def main():
+    print("welcome to roulette!")
+    
+    while True:
+        play_again = play_game()
+        
+        if not play_again:
+            break
+        
+        try:
+            restart = input("\nplay again? (yes/no): ").strip().lower()
+            if restart not in ["yes", "y"]:
+                print("thanks for playing!")
+                break
+        except KeyboardInterrupt:
+            print("\n\nthanks for playing!")
+            break
 
 if __name__ == "__main__":
     main()
