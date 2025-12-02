@@ -15,6 +15,11 @@ def get_number_color(number):
     else:
         return "black"
 
+def check_color_bet(winning_number, bet_color):
+    if winning_number == 0:
+        return False
+    return get_number_color(winning_number) == bet_color.lower()
+
 class Player:
     def __init__(self, initial_balance=1000):
         self.balance = initial_balance
