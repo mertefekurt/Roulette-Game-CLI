@@ -28,6 +28,14 @@ def check_odd_even_bet(winning_number, bet_type):
     else:
         return winning_number % 2 == 0
 
+def check_high_low_bet(winning_number, bet_type):
+    if winning_number == 0:
+        return False
+    if bet_type == "low":
+        return 1 <= winning_number <= 18
+    else:
+        return 19 <= winning_number <= 36
+
 class Player:
     def __init__(self, initial_balance=1000):
         self.balance = initial_balance
