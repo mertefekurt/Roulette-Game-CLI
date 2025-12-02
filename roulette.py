@@ -55,6 +55,27 @@ class Bet:
         self.value = value
         self.amount = amount
 
+def check_bet_win(bet, winning_number):
+    if bet.bet_type == "number":
+        return winning_number == bet.value
+    elif bet.bet_type == "color":
+        return check_color_bet(winning_number, bet.value)
+    elif bet.bet_type == "odd" or bet.bet_type == "even":
+        return check_odd_even_bet(winning_number, bet.bet_type)
+    elif bet.bet_type == "high" or bet.bet_type == "low":
+        return check_high_low_bet(winning_number, bet.bet_type)
+    return False
+
+def calculate_payout(bet, winning_number):
+    if not check_bet_win(bet, winning_number):
+        return 0
+    
+    if bet.bet_type == "number":
+        return bet.amount * 36
+    elif bet.bet_type in ["color", "odd", "even", "high", "low"]:
+        return bet.amount * 2
+    return 0
+
 def main():
     print("welcome to roulette!")
 
