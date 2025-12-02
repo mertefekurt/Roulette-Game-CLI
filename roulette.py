@@ -20,6 +20,14 @@ def check_color_bet(winning_number, bet_color):
         return False
     return get_number_color(winning_number) == bet_color.lower()
 
+def check_odd_even_bet(winning_number, bet_type):
+    if winning_number == 0:
+        return False
+    if bet_type == "odd":
+        return winning_number % 2 == 1
+    else:
+        return winning_number % 2 == 0
+
 class Player:
     def __init__(self, initial_balance=1000):
         self.balance = initial_balance
