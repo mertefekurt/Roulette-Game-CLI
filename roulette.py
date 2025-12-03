@@ -109,6 +109,9 @@ def calculate_payout(bet, winning_number):
 
 MINIMUM_BET = 10
 
+def display_separator():
+    print("-" * 50)
+
 def display_menu():
     print("\nbetting options:")
     print("1. number (0-36) - payout: 36x")
@@ -204,20 +207,26 @@ def play_game():
             
             if bet == "5":
                 stats = player.get_statistics()
-                print(f"\nstatistics:")
+                display_separator()
+                print("statistics:")
+                display_separator()
                 print(f"wins: {stats['wins']}")
                 print(f"losses: {stats['losses']}")
                 print(f"total bets: {stats['total_bets']}")
                 print(f"win rate: {stats['win_rate']:.1f}%")
-                print(f"profit: ${stats['profit']}")
+                profit_str = f"+${stats['profit']}" if stats['profit'] >= 0 else f"-${abs(stats['profit'])}"
+                print(f"profit: {profit_str}")
+                display_separator()
                 continue
             
             if bet == "6":
                 history = player.get_bet_history()
+                display_separator()
                 if not history:
-                    print("\nno bet history yet")
+                    print("no bet history yet")
                 else:
-                    print(f"\nbet history (last {min(5, len(history))} bets):")
+                    print(f"bet history (last {min(5, len(history))} bets):")
+                    display_separator()
                     for h in history[-5:]:
                         bet_info = h['bet']
                         bet_desc = f"{bet_info.bet_type}"
@@ -226,6 +235,7 @@ def play_game():
                         bet_desc += f" - ${bet_info.amount}"
                         result = "won" if h['won'] else "lost"
                         print(f"{bet_desc} -> {result} (landed on {h['winning_number']})")
+                display_separator()
                 continue
             
             if bet.amount > player.get_balance():
@@ -240,16 +250,19 @@ def play_game():
             winning_number = spin_wheel()
             color = get_number_color(winning_number)
             
-            print(f"\nspinning... the ball lands on {winning_number} ({color})")
+            display_separator()
+            print(f"spinning... the ball lands on {winning_number} ({color})")
+            display_separator()
             
             payout = calculate_payout(bet, winning_number)
             won = payout > 0
             if won:
                 print(f"you win ${payout}!")
-                player.add_balance(payout)
             else:
                 print("you lose!")
+            display_separator()
             
+            player.add_balance(payout) if won else None
             player.add_bet_to_history(bet, winning_number, won, payout)
     except KeyboardInterrupt:
         print("\n\ngame interrupted. thanks for playing!")
