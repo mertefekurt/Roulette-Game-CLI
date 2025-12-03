@@ -112,6 +112,21 @@ MINIMUM_BET = 10
 def display_separator():
     print("-" * 50)
 
+def format_bet_description(bet):
+    bet_desc = f"{bet.bet_type}"
+    if bet.value is not None:
+        bet_desc += f" ({bet.value})"
+    bet_desc += f" - ${bet.amount}"
+    return bet_desc
+
+def display_bet_summary(bet):
+    display_separator()
+    print("bet summary:")
+    print(f"type: {format_bet_description(bet)}")
+    potential_payout = bet.amount * 36 if bet.bet_type == "number" else bet.amount * 2
+    print(f"potential payout: ${potential_payout}")
+    display_separator()
+
 def display_menu():
     print("\nbetting options:")
     print("1. number (0-36) - payout: 36x")
