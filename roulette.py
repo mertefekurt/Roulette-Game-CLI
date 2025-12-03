@@ -107,27 +107,37 @@ def calculate_payout(bet, winning_number):
         return bet.amount * 2
     return 0
 
+MINIMUM_BET = 10
+
 def display_menu():
     print("\nbetting options:")
     print("1. number (0-36) - payout: 36x")
     print("2. color (red/black) - payout: 2x")
     print("3. odd/even - payout: 2x")
     print("4. high/low - payout: 2x")
-    print("5. quit")
+    print("5. view statistics")
+    print("6. view bet history")
+    print("7. quit")
 
 def get_bet_from_user():
-    choice = input("select bet type (1-5): ").strip()
+    choice = input("select bet type (1-7): ").strip()
     
-    if choice == "5":
+    if choice == "7":
         return None
+    
+    if choice == "5" or choice == "6":
+        return choice
     
     if choice not in ["1", "2", "3", "4"]:
         print("invalid choice")
         return None
     
-    amount = input("enter bet amount: ").strip()
+    amount = input(f"enter bet amount (minimum ${MINIMUM_BET}): ").strip()
     try:
         amount = int(amount)
+        if amount < MINIMUM_BET:
+            print(f"bet amount must be at least ${MINIMUM_BET}")
+            return None
         if amount <= 0:
             print("bet amount must be positive")
             return None
@@ -192,12 +202,38 @@ def play_game():
                 print("thanks for playing!")
                 return True
             
+            if bet == "5":
+                stats = player.get_statistics()
+                print(f"\nstatistics:")
+                print(f"wins: {stats['wins']}")
+                print(f"losses: {stats['losses']}")
+                print(f"total bets: {stats['total_bets']}")
+                print(f"win rate: {stats['win_rate']:.1f}%")
+                print(f"profit: ${stats['profit']}")
+                continue
+            
+            if bet == "6":
+                history = player.get_bet_history()
+                if not history:
+                    print("\nno bet history yet")
+                else:
+                    print(f"\nbet history (last {min(5, len(history))} bets):")
+                    for h in history[-5:]:
+                        bet_info = h['bet']
+                        bet_desc = f"{bet_info.bet_type}"
+                        if bet_info.value is not None:
+                            bet_desc += f" ({bet_info.value})"
+                        bet_desc += f" - ${bet_info.amount}"
+                        result = "won" if h['won'] else "lost"
+                        print(f"{bet_desc} -> {result} (landed on {h['winning_number']})")
+                continue
+            
             if bet.amount > player.get_balance():
                 print("insufficient balance")
                 continue
             
-            if bet.amount <= 0:
-                print("bet amount must be positive")
+            if bet.amount < MINIMUM_BET:
+                print(f"bet amount must be at least ${MINIMUM_BET}")
                 continue
             
             player.subtract_balance(bet.amount)
@@ -207,11 +243,14 @@ def play_game():
             print(f"\nspinning... the ball lands on {winning_number} ({color})")
             
             payout = calculate_payout(bet, winning_number)
-            if payout > 0:
+            won = payout > 0
+            if won:
                 print(f"you win ${payout}!")
                 player.add_balance(payout)
             else:
                 print("you lose!")
+            
+            player.add_bet_to_history(bet, winning_number, won, payout)
     except KeyboardInterrupt:
         print("\n\ngame interrupted. thanks for playing!")
         return False
