@@ -39,6 +39,7 @@ def check_high_low_bet(winning_number, bet_type):
 class Player:
     def __init__(self, initial_balance=1000):
         self.balance = initial_balance
+        self.bet_history = []
     
     def get_balance(self):
         return self.balance
@@ -48,6 +49,17 @@ class Player:
     
     def subtract_balance(self, amount):
         self.balance -= amount
+    
+    def add_bet_to_history(self, bet, winning_number, won, payout):
+        self.bet_history.append({
+            'bet': bet,
+            'winning_number': winning_number,
+            'won': won,
+            'payout': payout
+        })
+    
+    def get_bet_history(self):
+        return self.bet_history
 
 class Bet:
     def __init__(self, bet_type, value, amount):
