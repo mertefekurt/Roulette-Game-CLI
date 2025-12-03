@@ -258,11 +258,11 @@ def play_game():
             won = payout > 0
             if won:
                 print(f"you win ${payout}!")
+                player.add_balance(payout)
             else:
                 print("you lose!")
             display_separator()
             
-            player.add_balance(payout) if won else None
             player.add_bet_to_history(bet, winning_number, won, payout)
     except KeyboardInterrupt:
         print("\n\ngame interrupted. thanks for playing!")
