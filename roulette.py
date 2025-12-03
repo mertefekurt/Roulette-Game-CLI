@@ -39,7 +39,10 @@ def check_high_low_bet(winning_number, bet_type):
 class Player:
     def __init__(self, initial_balance=1000):
         self.balance = initial_balance
+        self.initial_balance = initial_balance
         self.bet_history = []
+        self.wins = 0
+        self.losses = 0
     
     def get_balance(self):
         return self.balance
@@ -57,9 +60,25 @@ class Player:
             'won': won,
             'payout': payout
         })
+        if won:
+            self.wins += 1
+        else:
+            self.losses += 1
     
     def get_bet_history(self):
         return self.bet_history
+    
+    def get_statistics(self):
+        total_bets = self.wins + self.losses
+        win_rate = (self.wins / total_bets * 100) if total_bets > 0 else 0
+        profit = self.balance - self.initial_balance
+        return {
+            'wins': self.wins,
+            'losses': self.losses,
+            'total_bets': total_bets,
+            'win_rate': win_rate,
+            'profit': profit
+        }
 
 class Bet:
     def __init__(self, bet_type, value, amount):
