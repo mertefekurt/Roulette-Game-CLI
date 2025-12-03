@@ -202,6 +202,12 @@ def get_bet_from_user():
     
     return None
 
+def check_balance_warnings(balance):
+    if balance < 50:
+        print("warning: low balance!")
+    elif balance < 100:
+        print("caution: balance is getting low")
+
 def play_game():
     player = Player()
     
@@ -211,7 +217,9 @@ def play_game():
                 print("\ngame over! you're out of money.")
                 return True
             
-            print(f"\ncurrent balance: ${player.get_balance()}")
+            balance = player.get_balance()
+            print(f"\ncurrent balance: ${balance}")
+            check_balance_warnings(balance)
             display_menu()
             
             try:
