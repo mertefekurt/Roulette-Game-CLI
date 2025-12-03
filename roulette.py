@@ -288,6 +288,12 @@ def play_game():
                 print(f"bet amount must be at least ${MINIMUM_BET}")
                 continue
             
+            display_bet_summary(bet)
+            confirm = input("confirm bet? (yes/no): ").strip().lower()
+            if confirm not in ["yes", "y"]:
+                print("bet cancelled")
+                continue
+            
             player.subtract_balance(bet.amount)
             winning_number = spin_wheel()
             color = get_number_color(winning_number)
