@@ -150,18 +150,25 @@ def get_bet_from_user():
         print("invalid choice")
         return None
     
-    amount = input(f"enter bet amount (minimum ${MINIMUM_BET}): ").strip()
-    try:
-        amount = int(amount)
-        if amount < MINIMUM_BET:
-            print(f"bet amount must be at least ${MINIMUM_BET}")
+    print("\nquick bet amounts:")
+    print("a. $10  b. $50  c. $100  d. $500")
+    amount_input = input(f"enter bet amount or quick option (minimum ${MINIMUM_BET}): ").strip().lower()
+    
+    quick_amounts = {'a': 10, 'b': 50, 'c': 100, 'd': 500}
+    if amount_input in quick_amounts:
+        amount = quick_amounts[amount_input]
+    else:
+        try:
+            amount = int(amount_input)
+            if amount < MINIMUM_BET:
+                print(f"bet amount must be at least ${MINIMUM_BET}")
+                return None
+            if amount <= 0:
+                print("bet amount must be positive")
+                return None
+        except ValueError:
+            print("invalid bet amount")
             return None
-        if amount <= 0:
-            print("bet amount must be positive")
-            return None
-    except ValueError:
-        print("invalid bet amount")
-        return None
     
     if choice == "1":
         number = input("enter number (0-36): ").strip()
