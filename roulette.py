@@ -232,6 +232,18 @@ def play_game():
                 continue
             
             if bet is None:
+                stats = player.get_statistics()
+                display_separator()
+                print("session summary:")
+                display_separator()
+                print(f"starting balance: ${player.initial_balance}")
+                print(f"ending balance: ${player.get_balance()}")
+                print(f"total bets: {stats['total_bets']}")
+                print(f"wins: {stats['wins']} | losses: {stats['losses']}")
+                print(f"win rate: {stats['win_rate']:.1f}%")
+                profit_str = f"+${stats['profit']}" if stats['profit'] >= 0 else f"-${abs(stats['profit'])}"
+                print(f"profit/loss: {profit_str}")
+                display_separator()
                 print("thanks for playing!")
                 return True
             
