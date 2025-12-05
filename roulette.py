@@ -166,22 +166,33 @@ def display_menu():
     print("3. odd/even - payout: 2x")
     print("4. high/low - payout: 2x")
     print("5. dozen (1-12 / 13-24 / 25-36) - payout: 3x")
-    print("6. view statistics")
-    print("7. view bet history")
-    print("8. quit")
+    print("6. repeat last bet")
+    print("7. view statistics")
+    print("8. view bet history")
+    print("9. quit")
 
-def get_bet_from_user():
-    choice = input("select bet type (1-8): ").strip()
+def get_bet_from_user(last_bet=None):
+    choice = input("select bet type (1-9): ").strip()
+    
+    if choice == "9":
+        return "quit"
+    
+    if choice == "7":
+        return "stats"
     
     if choice == "8":
-        return None
+        return "history"
     
-    if choice == "6" or choice == "7":
-        return choice
+    if choice == "6":
+        if last_bet is None:
+            print("no previous bet to repeat")
+            return "invalid"
+        print(f"repeating last bet: {format_bet_description(last_bet)}")
+        return Bet(last_bet.bet_type, last_bet.value, last_bet.amount)
     
     if choice not in ["1", "2", "3", "4", "5"]:
         print("invalid choice")
-        return None
+        return "invalid"
     
     print("\nquick bet amounts:")
     print("a. $10  b. $50  c. $100  d. $500")
@@ -195,13 +206,13 @@ def get_bet_from_user():
             amount = int(amount_input)
             if amount < MINIMUM_BET:
                 print(f"bet amount must be at least ${MINIMUM_BET}")
-                return None
+                return "invalid"
             if amount <= 0:
                 print("bet amount must be positive")
-                return None
+                return "invalid"
         except ValueError:
             print("invalid bet amount")
-            return None
+            return "invalid"
     
     if choice == "1":
         number = input("enter number (0-36): ").strip()
@@ -209,28 +220,28 @@ def get_bet_from_user():
             number = int(number)
             if number < 0 or number > 36:
                 print("number must be between 0 and 36")
-                return None
+                return "invalid"
             return Bet("number", number, amount)
         except ValueError:
             print("invalid number")
-            return None
+            return "invalid"
     elif choice == "2":
         color = input("enter color (red/black): ").strip().lower()
         if color not in ["red", "black"]:
             print("color must be red or black")
-            return None
+            return "invalid"
         return Bet("color", color, amount)
     elif choice == "3":
         oe = input("enter odd or even: ").strip().lower()
         if oe not in ["odd", "even"]:
             print("must be odd or even")
-            return None
+            return "invalid"
         return Bet(oe, None, amount)
     elif choice == "4":
         hl = input("enter high or low: ").strip().lower()
         if hl not in ["high", "low"]:
             print("must be high or low")
-            return None
+            return "invalid"
         return Bet(hl, None, amount)
     elif choice == "5":
         dozen_input = input("choose dozen (1-12 / 13-24 / 25-36) [1/2/3]: ").strip().lower()
@@ -247,10 +258,10 @@ def get_bet_from_user():
         }
         if dozen_input not in dozen_options:
             print("invalid dozen selection")
-            return None
+            return "invalid"
         return Bet("dozen", dozen_options[dozen_input], amount)
     
-    return None
+    return "invalid"
 
 def check_balance_warnings(balance):
     if balance < 50:
@@ -272,8 +283,10 @@ def play_game():
             check_balance_warnings(balance)
             display_menu()
             
+            last_bet = player.bet_history[-1]['bet'] if player.bet_history else None
+            
             try:
-                bet = get_bet_from_user()
+                bet = get_bet_from_user(last_bet)
             except KeyboardInterrupt:
                 print("\n\ngame interrupted. thanks for playing!")
                 return False
@@ -281,7 +294,7 @@ def play_game():
                 print(f"error: {str(e)}")
                 continue
             
-            if bet is None:
+            if bet == "quit":
                 stats = player.get_statistics()
                 display_separator()
                 print("session summary:")
@@ -297,7 +310,7 @@ def play_game():
                 print("thanks for playing!")
                 return True
             
-            if bet == "5":
+            if bet == "stats":
                 stats = player.get_statistics()
                 display_separator()
                 print("statistics:")
@@ -311,7 +324,7 @@ def play_game():
                 display_separator()
                 continue
             
-            if bet == "6":
+            if bet == "history":
                 history = player.get_bet_history()
                 display_separator()
                 if not history:
@@ -328,6 +341,9 @@ def play_game():
                         result = "won" if h['won'] else "lost"
                         print(f"{bet_desc} -> {result} (landed on {h['winning_number']})")
                 display_separator()
+                continue
+
+            if bet == "invalid":
                 continue
             
             if bet.amount > player.get_balance():
