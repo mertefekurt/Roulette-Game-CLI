@@ -14,3 +14,7 @@ A simple command-line roulette game built with Python.
 python roulette.py
 ```
 
+### Configuration
+
+- `ROULETTE_START_BALANCE`: optional environment variable to set the starting balance (default: 1000).
+

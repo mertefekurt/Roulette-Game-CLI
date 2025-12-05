@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import random
 
 RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]
@@ -108,6 +109,20 @@ def calculate_payout(bet, winning_number):
     return 0
 
 MINIMUM_BET = 10
+DEFAULT_START_BALANCE = 1000
+
+def get_starting_balance():
+    env_value = os.getenv("ROULETTE_START_BALANCE")
+    if env_value is None:
+        return DEFAULT_START_BALANCE
+    try:
+        parsed_value = int(env_value)
+        if parsed_value <= 0:
+            raise ValueError
+        return parsed_value
+    except ValueError:
+        print("invalid ROULETTE_START_BALANCE value, using default $1000")
+        return DEFAULT_START_BALANCE
 
 def display_separator():
     print("-" * 50)
@@ -209,7 +224,7 @@ def check_balance_warnings(balance):
         print("caution: balance is getting low")
 
 def play_game():
-    player = Player()
+    player = Player(initial_balance=get_starting_balance())
     
     try:
         while True:
