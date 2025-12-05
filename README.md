@@ -4,7 +4,7 @@ A simple command-line roulette game built with Python.
 
 ## Features
 
-- Place bets on numbers, colors, odd/even, or high/low
+- Place bets on numbers, colors, odd/even, high/low, or dozens
 - Track your balance
 - Simple and interactive gameplay
 

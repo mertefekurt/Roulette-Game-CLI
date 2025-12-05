@@ -37,6 +37,12 @@ def check_high_low_bet(winning_number, bet_type):
     else:
         return 19 <= winning_number <= 36
 
+def check_dozen_bet(winning_number, dozen_range):
+    if winning_number == 0:
+        return False
+    start, end = dozen_range
+    return start <= winning_number <= end
+
 class Player:
     def __init__(self, initial_balance=1000):
         self.balance = initial_balance
@@ -96,6 +102,8 @@ def check_bet_win(bet, winning_number):
         return check_odd_even_bet(winning_number, bet.bet_type)
     elif bet.bet_type == "high" or bet.bet_type == "low":
         return check_high_low_bet(winning_number, bet.bet_type)
+    elif bet.bet_type == "dozen":
+        return check_dozen_bet(winning_number, bet.value)
     return False
 
 def calculate_payout(bet, winning_number):
@@ -106,6 +114,8 @@ def calculate_payout(bet, winning_number):
         return bet.amount * 36
     elif bet.bet_type in ["color", "odd", "even", "high", "low"]:
         return bet.amount * 2
+    elif bet.bet_type == "dozen":
+        return bet.amount * 3
     return 0
 
 MINIMUM_BET = 10
@@ -129,7 +139,9 @@ def display_separator():
 
 def format_bet_description(bet):
     bet_desc = f"{bet.bet_type}"
-    if bet.value is not None:
+    if bet.bet_type == "dozen" and isinstance(bet.value, tuple):
+        bet_desc += f" ({bet.value[0]}-{bet.value[1]})"
+    elif bet.value is not None:
         bet_desc += f" ({bet.value})"
     bet_desc += f" - ${bet.amount}"
     return bet_desc
@@ -138,7 +150,12 @@ def display_bet_summary(bet):
     display_separator()
     print("bet summary:")
     print(f"type: {format_bet_description(bet)}")
-    potential_payout = bet.amount * 36 if bet.bet_type == "number" else bet.amount * 2
+    if bet.bet_type == "number":
+        potential_payout = bet.amount * 36
+    elif bet.bet_type == "dozen":
+        potential_payout = bet.amount * 3
+    else:
+        potential_payout = bet.amount * 2
     print(f"potential payout: ${potential_payout}")
     display_separator()
 
@@ -148,20 +165,21 @@ def display_menu():
     print("2. color (red/black) - payout: 2x")
     print("3. odd/even - payout: 2x")
     print("4. high/low - payout: 2x")
-    print("5. view statistics")
-    print("6. view bet history")
-    print("7. quit")
+    print("5. dozen (1-12 / 13-24 / 25-36) - payout: 3x")
+    print("6. view statistics")
+    print("7. view bet history")
+    print("8. quit")
 
 def get_bet_from_user():
-    choice = input("select bet type (1-7): ").strip()
+    choice = input("select bet type (1-8): ").strip()
     
-    if choice == "7":
+    if choice == "8":
         return None
     
-    if choice == "5" or choice == "6":
+    if choice == "6" or choice == "7":
         return choice
     
-    if choice not in ["1", "2", "3", "4"]:
+    if choice not in ["1", "2", "3", "4", "5"]:
         print("invalid choice")
         return None
     
@@ -214,6 +232,23 @@ def get_bet_from_user():
             print("must be high or low")
             return None
         return Bet(hl, None, amount)
+    elif choice == "5":
+        dozen_input = input("choose dozen (1-12 / 13-24 / 25-36) [1/2/3]: ").strip().lower()
+        dozen_options = {
+            "1": (1, 12),
+            "1st": (1, 12),
+            "first": (1, 12),
+            "2": (13, 24),
+            "2nd": (13, 24),
+            "second": (13, 24),
+            "3": (25, 36),
+            "3rd": (25, 36),
+            "third": (25, 36)
+        }
+        if dozen_input not in dozen_options:
+            print("invalid dozen selection")
+            return None
+        return Bet("dozen", dozen_options[dozen_input], amount)
     
     return None
 
