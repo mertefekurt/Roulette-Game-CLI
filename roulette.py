@@ -119,20 +119,90 @@ def display_menu():
     print("2. color (red/black) - payout: 2x")
     print("3. odd/even - payout: 2x")
     print("4. high/low - payout: 2x")
-    print("5. view statistics")
-    print("6. view bet history")
-    print("7. save game")
-    print("8. load game")
-    print("9. view leaderboard")
+    print("5. multiple bets (bet on multiple options)")
+    print("6. view statistics")
+    print("7. view bet history")
+    print("8. save game")
+    print("9. load game")
+    print("a. view leaderboard")
     print("0. quit")
 
+def get_multiple_bets():
+    bets = []
+    total_amount = 0
+    
+    print("\ncreate multiple bets (enter 'done' when finished):")
+    while True:
+        print(f"\ncurrent bets: {len(bets)} | total amount: ${total_amount}")
+        print("1. number  2. color  3. odd/even  4. high/low")
+        bet_choice = input("select bet type (or 'done'): ").strip().lower()
+        
+        if bet_choice == "done":
+            if len(bets) == 0:
+                print("no bets added")
+                return None
+            break
+        
+        if bet_choice not in ["1", "2", "3", "4"]:
+            print("invalid choice")
+            continue
+        
+        amount_input = input(f"enter bet amount (minimum ${MINIMUM_BET}): ").strip().lower()
+        if amount_input in QUICK_BET_AMOUNTS:
+            amount = QUICK_BET_AMOUNTS[amount_input]
+        else:
+            try:
+                amount = int(amount_input)
+                if amount < MINIMUM_BET:
+                    print(f"bet amount must be at least ${MINIMUM_BET}")
+                    continue
+            except ValueError:
+                print("invalid bet amount")
+                continue
+        
+        if bet_choice == "1":
+            number = input("enter number (0-36): ").strip()
+            try:
+                number = int(number)
+                if number < 0 or number > 36:
+                    print("number must be between 0 and 36")
+                    continue
+                bets.append(Bet("number", number, amount))
+                total_amount += amount
+            except ValueError:
+                print("invalid number")
+                continue
+        elif bet_choice == "2":
+            color = input("enter color (red/black): ").strip().lower()
+            if color not in ["red", "black"]:
+                print("color must be red or black")
+                continue
+            bets.append(Bet("color", color, amount))
+            total_amount += amount
+        elif bet_choice == "3":
+            oe = input("enter odd or even: ").strip().lower()
+            if oe not in ["odd", "even"]:
+                print("must be odd or even")
+                continue
+            bets.append(Bet(oe, None, amount))
+            total_amount += amount
+        elif bet_choice == "4":
+            hl = input("enter high or low: ").strip().lower()
+            if hl not in ["high", "low"]:
+                print("must be high or low")
+                continue
+            bets.append(Bet(hl, None, amount))
+            total_amount += amount
+    
+    return bets
+
 def get_bet_from_user():
-    choice = input("select bet type (0-9): ").strip()
+    choice = input("select bet type (0-9, a): ").strip().lower()
     
     if choice == "0":
         return None
     
-    if choice in ["5", "6", "7", "8", "9"]:
+    if choice in ["5", "6", "7", "8", "9", "a"]:
         return choice
     
     if choice not in ["1", "2", "3", "4"]:
@@ -249,6 +319,56 @@ def play_game():
                 return True
             
             if bet == "5":
+                multiple_bets = get_multiple_bets()
+                if multiple_bets is None:
+                    continue
+                
+                total_bet_amount = sum(b.amount for b in multiple_bets)
+                if total_bet_amount > player.get_balance():
+                    print("insufficient balance for all bets")
+                    continue
+                
+                display_separator()
+                print("multiple bets summary:")
+                for i, b in enumerate(multiple_bets, 1):
+                    print(f"{i}. {format_bet_description(b)}")
+                print(f"total bet amount: ${total_bet_amount}")
+                display_separator()
+                
+                confirm = input("confirm all bets? (yes/no): ").strip().lower()
+                if confirm not in ["yes", "y"]:
+                    print("bets cancelled")
+                    continue
+                
+                player.subtract_balance(total_bet_amount)
+                winning_number = spin_wheel()
+                color = get_number_color(winning_number)
+                
+                display_separator()
+                print(f"spinning... the ball lands on {winning_number} ({color})")
+                display_separator()
+                
+                total_payout = 0
+                for b in multiple_bets:
+                    payout = calculate_payout(b, winning_number)
+                    if payout > 0:
+                        total_payout += payout
+                        print(f"won on {format_bet_description(b)}: ${payout}")
+                
+                if total_payout > 0:
+                    print(f"total winnings: ${total_payout}!")
+                    player.add_balance(total_payout)
+                else:
+                    print("all bets lost!")
+                display_separator()
+                
+                for b in multiple_bets:
+                    payout = calculate_payout(b, winning_number)
+                    won = payout > 0
+                    player.add_bet_to_history(b, winning_number, won, payout)
+                continue
+            
+            if bet == "6":
                 stats = player.get_statistics()
                 display_separator()
                 print("statistics:")
@@ -261,7 +381,7 @@ def play_game():
                 display_separator()
                 continue
             
-            if bet == "6":
+            if bet == "7":
                 history = player.get_bet_history()
                 display_separator()
                 if not history:
