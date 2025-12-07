@@ -46,7 +46,12 @@ def load_game_state(player):
         player.losses = save_data.get('losses', 0)
         player.bet_history = []
         
-        from roulette import Bet
+        class Bet:
+            def __init__(self, bet_type, value, amount):
+                self.bet_type = bet_type
+                self.value = value
+                self.amount = amount
+        
         for h in save_data.get('bet_history', []):
             bet = Bet(h['bet_type'], h['value'], h['amount'])
             player.bet_history.append({
