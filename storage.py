@@ -124,3 +124,37 @@ def display_leaderboard():
         print(f"{i}. {entry['name']} - balance: ${entry['final_balance']} | profit: ${entry['profit']} | bets: {entry['total_bets']} | win rate: {entry['win_rate']:.1f}%")
     display_separator()
 
+def export_statistics(player, filename="statistics.txt"):
+    stats = player.get_statistics()
+    history = player.get_bet_history()
+    
+    try:
+        with open(filename, 'w') as f:
+            f.write("roulette game statistics\n")
+            f.write("=" * 50 + "\n\n")
+            f.write(f"starting balance: ${player.initial_balance}\n")
+            f.write(f"ending balance: ${player.get_balance()}\n")
+            f.write(f"profit/loss: ${stats['profit']}\n\n")
+            f.write("game statistics:\n")
+            f.write(f"total bets: {stats['total_bets']}\n")
+            f.write(f"wins: {stats['wins']}\n")
+            f.write(f"losses: {stats['losses']}\n")
+            f.write(f"win rate: {stats['win_rate']:.1f}%\n\n")
+            
+            if history:
+                f.write("bet history:\n")
+                f.write("-" * 50 + "\n")
+                for i, h in enumerate(history, 1):
+                    bet_info = h['bet']
+                    bet_desc = f"{bet_info.bet_type}"
+                    if bet_info.value is not None:
+                        bet_desc += f" ({bet_info.value})"
+                    bet_desc += f" - ${bet_info.amount}"
+                    result = "won" if h['won'] else "lost"
+                    f.write(f"{i}. {bet_desc} -> {result} (landed on {h['winning_number']}, payout: ${h['payout']})\n")
+        
+        return True
+    except Exception as e:
+        print(f"error exporting statistics: {str(e)}")
+        return False
+

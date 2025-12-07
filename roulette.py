@@ -9,7 +9,7 @@ from utils import (
     display_separator, format_bet_description, display_bet_summary,
     format_currency, format_percentage, format_profit_loss
 )
-from storage import save_game_state, load_game_state, delete_save_file, save_to_leaderboard, display_leaderboard
+from storage import save_game_state, load_game_state, delete_save_file, save_to_leaderboard, display_leaderboard, export_statistics
 
 def spin_wheel():
     return random.randint(0, 36)
@@ -125,6 +125,7 @@ def display_menu():
     print("8. save game")
     print("9. load game")
     print("a. view leaderboard")
+    print("b. export statistics to file")
     print("0. quit")
 
 def get_multiple_bets():
@@ -197,12 +198,12 @@ def get_multiple_bets():
     return bets
 
 def get_bet_from_user():
-    choice = input("select bet type (0-9, a): ").strip().lower()
+    choice = input("select bet type (0-9, a-b): ").strip().lower()
     
     if choice == "0":
         return None
     
-    if choice in ["5", "6", "7", "8", "9", "a"]:
+    if choice in ["5", "6", "7", "8", "9", "a", "b"]:
         return choice
     
     if choice not in ["1", "2", "3", "4"]:
@@ -411,8 +412,18 @@ def play_game():
                     print("no saved game found")
                 continue
             
-            if bet == "9":
+            if bet == "a":
                 display_leaderboard()
+                continue
+            
+            if bet == "b":
+                filename = input("enter filename (default: statistics.txt): ").strip()
+                if not filename:
+                    filename = "statistics.txt"
+                if export_statistics(player, filename):
+                    print(f"statistics exported to {filename}!")
+                else:
+                    print("failed to export statistics")
                 continue
             
             if bet.amount > player.get_balance():
