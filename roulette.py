@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 import random
-
-RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]
-BLACK_NUMBERS = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35]
+from config import (
+    RED_NUMBERS, BLACK_NUMBERS, MINIMUM_BET, INITIAL_BALANCE,
+    LOW_BALANCE_WARNING, CRITICAL_BALANCE_WARNING, QUICK_BET_AMOUNTS,
+    PAYOUT_MULTIPLIERS
+)
+from utils import (
+    display_separator, format_bet_description, display_bet_summary,
+    format_currency, format_percentage, format_profit_loss
+)
+from storage import save_game_state, load_game_state, delete_save_file, save_to_leaderboard, display_leaderboard
 
 def spin_wheel():
     return random.randint(0, 36)
@@ -37,7 +44,9 @@ def check_high_low_bet(winning_number, bet_type):
         return 19 <= winning_number <= 36
 
 class Player:
-    def __init__(self, initial_balance=1000):
+    def __init__(self, initial_balance=None):
+        if initial_balance is None:
+            initial_balance = INITIAL_BALANCE
         self.balance = initial_balance
         self.initial_balance = initial_balance
         self.bet_history = []
@@ -101,31 +110,8 @@ def calculate_payout(bet, winning_number):
     if not check_bet_win(bet, winning_number):
         return 0
     
-    if bet.bet_type == "number":
-        return bet.amount * 36
-    elif bet.bet_type in ["color", "odd", "even", "high", "low"]:
-        return bet.amount * 2
-    return 0
-
-MINIMUM_BET = 10
-
-def display_separator():
-    print("-" * 50)
-
-def format_bet_description(bet):
-    bet_desc = f"{bet.bet_type}"
-    if bet.value is not None:
-        bet_desc += f" ({bet.value})"
-    bet_desc += f" - ${bet.amount}"
-    return bet_desc
-
-def display_bet_summary(bet):
-    display_separator()
-    print("bet summary:")
-    print(f"type: {format_bet_description(bet)}")
-    potential_payout = bet.amount * 36 if bet.bet_type == "number" else bet.amount * 2
-    print(f"potential payout: ${potential_payout}")
-    display_separator()
+    multiplier = PAYOUT_MULTIPLIERS.get(bet.bet_type, 2)
+    return bet.amount * multiplier
 
 def display_menu():
     print("\nbetting options:")
@@ -135,15 +121,18 @@ def display_menu():
     print("4. high/low - payout: 2x")
     print("5. view statistics")
     print("6. view bet history")
-    print("7. quit")
+    print("7. save game")
+    print("8. load game")
+    print("9. view leaderboard")
+    print("0. quit")
 
 def get_bet_from_user():
-    choice = input("select bet type (1-7): ").strip()
+    choice = input("select bet type (0-9): ").strip()
     
-    if choice == "7":
+    if choice == "0":
         return None
     
-    if choice == "5" or choice == "6":
+    if choice in ["5", "6", "7", "8", "9"]:
         return choice
     
     if choice not in ["1", "2", "3", "4"]:
@@ -154,9 +143,8 @@ def get_bet_from_user():
     print("a. $10  b. $50  c. $100  d. $500")
     amount_input = input(f"enter bet amount or quick option (minimum ${MINIMUM_BET}): ").strip().lower()
     
-    quick_amounts = {'a': 10, 'b': 50, 'c': 100, 'd': 500}
-    if amount_input in quick_amounts:
-        amount = quick_amounts[amount_input]
+    if amount_input in QUICK_BET_AMOUNTS:
+        amount = QUICK_BET_AMOUNTS[amount_input]
     else:
         try:
             amount = int(amount_input)
@@ -203,9 +191,9 @@ def get_bet_from_user():
     return None
 
 def check_balance_warnings(balance):
-    if balance < 50:
+    if balance < CRITICAL_BALANCE_WARNING:
         print("warning: low balance!")
-    elif balance < 100:
+    elif balance < LOW_BALANCE_WARNING:
         print("caution: balance is getting low")
 
 def play_game():
@@ -236,14 +224,27 @@ def play_game():
                 display_separator()
                 print("session summary:")
                 display_separator()
-                print(f"starting balance: ${player.initial_balance}")
-                print(f"ending balance: ${player.get_balance()}")
+                print(f"starting balance: {format_currency(player.initial_balance)}")
+                print(f"ending balance: {format_currency(player.get_balance())}")
                 print(f"total bets: {stats['total_bets']}")
                 print(f"wins: {stats['wins']} | losses: {stats['losses']}")
-                print(f"win rate: {stats['win_rate']:.1f}%")
-                profit_str = f"+${stats['profit']}" if stats['profit'] >= 0 else f"-${abs(stats['profit'])}"
-                print(f"profit/loss: {profit_str}")
+                print(f"win rate: {format_percentage(stats['win_rate'])}")
+                print(f"profit/loss: {format_profit_loss(stats['profit'])}")
                 display_separator()
+                
+                if stats['total_bets'] > 0:
+                    player_name = input("enter your name for leaderboard (or press enter to skip): ").strip()
+                    if player_name:
+                        save_to_leaderboard(
+                            player_name,
+                            player.get_balance(),
+                            stats['profit'],
+                            stats['total_bets'],
+                            stats['win_rate']
+                        )
+                        print("saved to leaderboard!")
+                
+                delete_save_file()
                 print("thanks for playing!")
                 return True
             
@@ -255,9 +256,8 @@ def play_game():
                 print(f"wins: {stats['wins']}")
                 print(f"losses: {stats['losses']}")
                 print(f"total bets: {stats['total_bets']}")
-                print(f"win rate: {stats['win_rate']:.1f}%")
-                profit_str = f"+${stats['profit']}" if stats['profit'] >= 0 else f"-${abs(stats['profit'])}"
-                print(f"profit: {profit_str}")
+                print(f"win rate: {format_percentage(stats['win_rate'])}")
+                print(f"profit: {format_profit_loss(stats['profit'])}")
                 display_separator()
                 continue
             
@@ -271,13 +271,28 @@ def play_game():
                     display_separator()
                     for h in history[-5:]:
                         bet_info = h['bet']
-                        bet_desc = f"{bet_info.bet_type}"
-                        if bet_info.value is not None:
-                            bet_desc += f" ({bet_info.value})"
-                        bet_desc += f" - ${bet_info.amount}"
+                        bet_desc = format_bet_description(bet_info)
                         result = "won" if h['won'] else "lost"
                         print(f"{bet_desc} -> {result} (landed on {h['winning_number']})")
                 display_separator()
+                continue
+            
+            if bet == "7":
+                if save_game_state(player):
+                    print("game saved successfully!")
+                else:
+                    print("failed to save game")
+                continue
+            
+            if bet == "8":
+                if load_game_state(player):
+                    print("game loaded successfully!")
+                else:
+                    print("no saved game found")
+                continue
+            
+            if bet == "9":
+                display_leaderboard()
                 continue
             
             if bet.amount > player.get_balance():
