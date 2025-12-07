@@ -9,3 +9,8 @@ ENV/
 .venv
 .DS_Store
 
+game_save.json
+leaderboard.json
+
+
+
