@@ -129,6 +129,7 @@ def display_menu():
     print("4. high/low - payout: 2x")
     print("5. dozen (1-12 / 13-24 / 25-36) - payout: 3x")
     print("6. multiple bets (bet on multiple options)")
+    print("r. repeat last bet")
     print("7. view statistics")
     print("8. view bet history")
     print("9. save game")
@@ -206,11 +207,18 @@ def get_multiple_bets():
     
     return bets
 
-def get_bet_from_user():
-    choice = input("select bet type (0-9, a-c): ").strip().lower()
+def get_bet_from_user(last_bet=None):
+    choice = input("select bet type (0-9, a-c, r): ").strip().lower()
     
     if choice == "0":
         return None
+    
+    if choice == "r":
+        if last_bet is None:
+            print("no previous bet to repeat")
+            return "repeat_unavailable"
+        print(f"repeating last bet: {format_bet_description(last_bet)}")
+        return Bet(last_bet.bet_type, last_bet.value, last_bet.amount)
     
     if choice in ["6", "7", "8", "9", "a", "b", "c"]:
         return choice
@@ -307,8 +315,10 @@ def play_game():
             check_balance_warnings(balance)
             display_menu()
             
+            last_bet = player.bet_history[-1]['bet'] if player.bet_history else None
+            
             try:
-                bet = get_bet_from_user()
+                bet = get_bet_from_user(last_bet)
             except KeyboardInterrupt:
                 print("\n\ngame interrupted. thanks for playing!")
                 return False
@@ -344,6 +354,9 @@ def play_game():
                 delete_save_file()
                 print("thanks for playing!")
                 return True
+            
+            if bet == "repeat_unavailable":
+                continue
             
             if bet == "5":
                 # single dozen bet handled below as normal bet
