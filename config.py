@@ -19,6 +19,7 @@ PAYOUT_MULTIPLIERS = {
     'odd': 2,
     'even': 2,
     'high': 2,
-    'low': 2
+    'low': 2,
+    'dozen': 3
 }
 

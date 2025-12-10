@@ -3,7 +3,9 @@ def display_separator():
 
 def format_bet_description(bet):
     bet_desc = f"{bet.bet_type}"
-    if bet.value is not None:
+    if bet.bet_type == "dozen" and isinstance(bet.value, tuple):
+        bet_desc += f" ({bet.value[0]}-{bet.value[1]})"
+    elif bet.value is not None:
         bet_desc += f" ({bet.value})"
     bet_desc += f" - ${bet.amount}"
     return bet_desc

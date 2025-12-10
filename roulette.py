@@ -43,6 +43,12 @@ def check_high_low_bet(winning_number, bet_type):
     else:
         return 19 <= winning_number <= 36
 
+def check_dozen_bet(winning_number, dozen_range):
+    if winning_number == 0:
+        return False
+    start, end = dozen_range
+    return start <= winning_number <= end
+
 class Player:
     def __init__(self, initial_balance=None):
         if initial_balance is None:
@@ -104,6 +110,8 @@ def check_bet_win(bet, winning_number):
         return check_odd_even_bet(winning_number, bet.bet_type)
     elif bet.bet_type == "high" or bet.bet_type == "low":
         return check_high_low_bet(winning_number, bet.bet_type)
+    elif bet.bet_type == "dozen":
+        return check_dozen_bet(winning_number, bet.value)
     return False
 
 def calculate_payout(bet, winning_number):
@@ -119,13 +127,14 @@ def display_menu():
     print("2. color (red/black) - payout: 2x")
     print("3. odd/even - payout: 2x")
     print("4. high/low - payout: 2x")
-    print("5. multiple bets (bet on multiple options)")
-    print("6. view statistics")
-    print("7. view bet history")
-    print("8. save game")
-    print("9. load game")
-    print("a. view leaderboard")
-    print("b. export statistics to file")
+    print("5. dozen (1-12 / 13-24 / 25-36) - payout: 3x")
+    print("6. multiple bets (bet on multiple options)")
+    print("7. view statistics")
+    print("8. view bet history")
+    print("9. save game")
+    print("a. load game")
+    print("b. view leaderboard")
+    print("c. export statistics to file")
     print("0. quit")
 
 def get_multiple_bets():
@@ -198,15 +207,15 @@ def get_multiple_bets():
     return bets
 
 def get_bet_from_user():
-    choice = input("select bet type (0-9, a-b): ").strip().lower()
+    choice = input("select bet type (0-9, a-c): ").strip().lower()
     
     if choice == "0":
         return None
     
-    if choice in ["5", "6", "7", "8", "9", "a", "b"]:
+    if choice in ["6", "7", "8", "9", "a", "b", "c"]:
         return choice
     
-    if choice not in ["1", "2", "3", "4"]:
+    if choice not in ["1", "2", "3", "4", "5"]:
         print("invalid choice")
         return None
     
@@ -258,6 +267,23 @@ def get_bet_from_user():
             print("must be high or low")
             return None
         return Bet(hl, None, amount)
+    elif choice == "5":
+        dozen_input = input("choose dozen (1-12 / 13-24 / 25-36) [1/2/3]: ").strip().lower()
+        dozen_options = {
+            "1": (1, 12),
+            "1st": (1, 12),
+            "first": (1, 12),
+            "2": (13, 24),
+            "2nd": (13, 24),
+            "second": (13, 24),
+            "3": (25, 36),
+            "3rd": (25, 36),
+            "third": (25, 36)
+        }
+        if dozen_input not in dozen_options:
+            print("invalid dozen selection")
+            return None
+        return Bet("dozen", dozen_options[dozen_input], amount)
     
     return None
 
@@ -320,6 +346,10 @@ def play_game():
                 return True
             
             if bet == "5":
+                # single dozen bet handled below as normal bet
+                pass
+            
+            if bet == "6":
                 multiple_bets = get_multiple_bets()
                 if multiple_bets is None:
                     continue
@@ -369,7 +399,7 @@ def play_game():
                     player.add_bet_to_history(b, winning_number, won, payout)
                 continue
             
-            if bet == "6":
+            if bet == "7":
                 stats = player.get_statistics()
                 display_separator()
                 print("statistics:")
@@ -382,7 +412,7 @@ def play_game():
                 display_separator()
                 continue
             
-            if bet == "7":
+            if bet == "8":
                 history = player.get_bet_history()
                 display_separator()
                 if not history:
@@ -398,25 +428,25 @@ def play_game():
                 display_separator()
                 continue
             
-            if bet == "7":
+            if bet == "9":
                 if save_game_state(player):
                     print("game saved successfully!")
                 else:
                     print("failed to save game")
                 continue
             
-            if bet == "8":
+            if bet == "a":
                 if load_game_state(player):
                     print("game loaded successfully!")
                 else:
                     print("no saved game found")
                 continue
             
-            if bet == "a":
+            if bet == "b":
                 display_leaderboard()
                 continue
             
-            if bet == "b":
+            if bet == "c":
                 filename = input("enter filename (default: statistics.txt): ").strip()
                 if not filename:
                     filename = "statistics.txt"
