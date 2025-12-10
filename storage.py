@@ -76,6 +76,9 @@ def delete_save_file():
             return False
     return False
 
+def save_exists():
+    return os.path.exists(SAVE_FILE)
+
 def save_to_leaderboard(player_name, final_balance, profit, total_bets, win_rate):
     leaderboard = load_leaderboard()
     

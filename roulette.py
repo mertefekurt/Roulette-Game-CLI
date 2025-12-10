@@ -9,7 +9,7 @@ from utils import (
     display_separator, format_bet_description, display_bet_summary,
     format_currency, format_percentage, format_profit_loss
 )
-from storage import save_game_state, load_game_state, delete_save_file, save_to_leaderboard, display_leaderboard, export_statistics
+from storage import save_game_state, load_game_state, save_exists, save_to_leaderboard, display_leaderboard, export_statistics
 
 def spin_wheel():
     return random.randint(0, 36)
@@ -305,8 +305,21 @@ def play_game():
     player = Player()
     
     try:
+        if save_exists():
+            choice = input("saved game detected. load it? (yes/no): ").strip().lower()
+            if choice in ["yes", "y"]:
+                if load_game_state(player):
+                    print("save loaded. welcome back!")
+                else:
+                    print("failed to load saved game")
+    except KeyboardInterrupt:
+        print("\n\ngame interrupted during startup. thanks for playing!")
+        return False
+    
+    try:
         while True:
             if player.get_balance() <= 0:
+                save_game_state(player)
                 print("\ngame over! you're out of money.")
                 return True
             
@@ -351,7 +364,7 @@ def play_game():
                         )
                         print("saved to leaderboard!")
                 
-                delete_save_file()
+                save_game_state(player)
                 print("thanks for playing!")
                 return True
             
@@ -503,6 +516,7 @@ def play_game():
             player.add_bet_to_history(bet, winning_number, won, payout)
     except KeyboardInterrupt:
         print("\n\ngame interrupted. thanks for playing!")
+        save_game_state(player)
         return False
     except Exception as e:
         print(f"\nunexpected error: {str(e)}")
