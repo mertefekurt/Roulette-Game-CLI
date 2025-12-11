@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import random
 from config import (
-    RED_NUMBERS, BLACK_NUMBERS, MINIMUM_BET, INITIAL_BALANCE,
+    RED_NUMBERS, BLACK_NUMBERS, MINIMUM_BET, MAXIMUM_BET, INITIAL_BALANCE,
     LOW_BALANCE_WARNING, CRITICAL_BALANCE_WARNING, QUICK_BET_AMOUNTS,
     PAYOUT_MULTIPLIERS
 )
@@ -158,7 +158,7 @@ def get_multiple_bets():
             print("invalid choice")
             continue
         
-        amount_input = input(f"enter bet amount (minimum ${MINIMUM_BET}): ").strip().lower()
+        amount_input = input(f"enter bet amount (minimum ${MINIMUM_BET}, maximum ${MAXIMUM_BET}): ").strip().lower()
         if amount_input in QUICK_BET_AMOUNTS:
             amount = QUICK_BET_AMOUNTS[amount_input]
         else:
@@ -166,6 +166,9 @@ def get_multiple_bets():
                 amount = int(amount_input)
                 if amount < MINIMUM_BET:
                     print(f"bet amount must be at least ${MINIMUM_BET}")
+                    continue
+                if amount > MAXIMUM_BET:
+                    print(f"bet amount cannot exceed ${MAXIMUM_BET}")
                     continue
             except ValueError:
                 print("invalid bet amount")
@@ -229,7 +232,7 @@ def get_bet_from_user(last_bet=None):
     
     print("\nquick bet amounts:")
     print("a. $10  b. $50  c. $100  d. $500")
-    amount_input = input(f"enter bet amount or quick option (minimum ${MINIMUM_BET}): ").strip().lower()
+    amount_input = input(f"enter bet amount or quick option (minimum ${MINIMUM_BET}, maximum ${MAXIMUM_BET}): ").strip().lower()
     
     if amount_input in QUICK_BET_AMOUNTS:
         amount = QUICK_BET_AMOUNTS[amount_input]
@@ -238,6 +241,9 @@ def get_bet_from_user(last_bet=None):
             amount = int(amount_input)
             if amount < MINIMUM_BET:
                 print(f"bet amount must be at least ${MINIMUM_BET}")
+                return None
+            if amount > MAXIMUM_BET:
+                print(f"bet amount cannot exceed ${MAXIMUM_BET}")
                 return None
             if amount <= 0:
                 print("bet amount must be positive")
@@ -385,6 +391,11 @@ def play_game():
                     print("insufficient balance for all bets")
                     continue
                 
+                for b in multiple_bets:
+                    if b.amount > MAXIMUM_BET:
+                        print(f"one or more bets exceed maximum bet limit of ${MAXIMUM_BET}")
+                        continue
+                
                 display_separator()
                 print("multiple bets summary:")
                 for i, b in enumerate(multiple_bets, 1):
@@ -488,6 +499,10 @@ def play_game():
             
             if bet.amount < MINIMUM_BET:
                 print(f"bet amount must be at least ${MINIMUM_BET}")
+                continue
+            
+            if bet.amount > MAXIMUM_BET:
+                print(f"bet amount cannot exceed ${MAXIMUM_BET}")
                 continue
             
             display_bet_summary(bet)
