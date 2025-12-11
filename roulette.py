@@ -62,6 +62,7 @@ class Player:
         self.current_loss_streak = 0
         self.max_win_streak = 0
         self.max_loss_streak = 0
+        self.number_frequency = {}
     
     def get_balance(self):
         return self.balance
@@ -79,6 +80,9 @@ class Player:
             'won': won,
             'payout': payout
         })
+        
+        self.number_frequency[winning_number] = self.number_frequency.get(winning_number, 0) + 1
+        
         if won:
             self.wins += 1
             self.current_win_streak += 1
@@ -91,6 +95,12 @@ class Player:
             self.current_win_streak = 0
             if self.current_loss_streak > self.max_loss_streak:
                 self.max_loss_streak = self.current_loss_streak
+    
+    def get_hot_numbers(self, count=5):
+        if not self.number_frequency:
+            return []
+        sorted_numbers = sorted(self.number_frequency.items(), key=lambda x: x[1], reverse=True)
+        return sorted_numbers[:count]
     
     def get_bet_history(self):
         return self.bet_history
@@ -148,8 +158,9 @@ def display_menu():
     print("r. repeat last bet")
     print("7. view statistics")
     print("8. view bet history")
-    print("9. save game")
-    print("a. load game")
+    print("9. view hot numbers")
+    print("s. save game")
+    print("l. load game")
     print("b. view leaderboard")
     print("c. export statistics to file")
     print("0. quit")
@@ -239,7 +250,7 @@ def get_bet_from_user(last_bet=None):
         print(f"repeating last bet: {format_bet_description(last_bet)}")
         return Bet(last_bet.bet_type, last_bet.value, last_bet.amount)
     
-    if choice in ["6", "7", "8", "9", "a", "b", "c"]:
+    if choice in ["6", "7", "8", "9", "s", "l", "b", "c"]:
         return choice
     
     if choice not in ["1", "2", "3", "4", "5"]:
@@ -487,13 +498,27 @@ def play_game():
                 continue
             
             if bet == "9":
+                hot_numbers = player.get_hot_numbers(5)
+                display_separator()
+                if not hot_numbers:
+                    print("no numbers spun yet")
+                else:
+                    print("hot numbers (most frequent):")
+                    display_separator()
+                    for i, (number, count) in enumerate(hot_numbers, 1):
+                        color = get_number_color(number)
+                        print(f"{i}. {number} ({color}) - appeared {count} time{'s' if count > 1 else ''}")
+                display_separator()
+                continue
+            
+            if bet == "s":
                 if save_game_state(player):
                     print("game saved successfully!")
                 else:
                     print("failed to save game")
                 continue
             
-            if bet == "a":
+            if bet == "l":
                 if load_game_state(player):
                     print("game loaded successfully!")
                 else:

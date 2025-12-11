@@ -14,6 +14,7 @@ def save_game_state(player):
         'current_loss_streak': player.current_loss_streak,
         'max_win_streak': player.max_win_streak,
         'max_loss_streak': player.max_loss_streak,
+        'number_frequency': player.number_frequency,
         'bet_history': []
     }
     
@@ -52,6 +53,7 @@ def load_game_state(player):
         player.current_loss_streak = save_data.get('current_loss_streak', 0)
         player.max_win_streak = save_data.get('max_win_streak', 0)
         player.max_loss_streak = save_data.get('max_loss_streak', 0)
+        player.number_frequency = save_data.get('number_frequency', {})
         player.bet_history = []
         
         class Bet:
