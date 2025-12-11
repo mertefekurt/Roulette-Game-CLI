@@ -63,6 +63,10 @@ class Player:
         self.max_win_streak = 0
         self.max_loss_streak = 0
         self.number_frequency = {}
+        self.best_bet = None
+        self.worst_bet = None
+        self.best_payout = 0
+        self.worst_loss = 0
     
     def get_balance(self):
         return self.balance
@@ -82,6 +86,13 @@ class Player:
         })
         
         self.number_frequency[winning_number] = self.number_frequency.get(winning_number, 0) + 1
+        
+        if won and payout > self.best_payout:
+            self.best_payout = payout
+            self.best_bet = bet
+        elif not won and bet.amount > self.worst_loss:
+            self.worst_loss = bet.amount
+            self.worst_bet = bet
         
         if won:
             self.wins += 1
@@ -118,7 +129,9 @@ class Player:
             'current_win_streak': self.current_win_streak,
             'current_loss_streak': self.current_loss_streak,
             'max_win_streak': self.max_win_streak,
-            'max_loss_streak': self.max_loss_streak
+            'max_loss_streak': self.max_loss_streak,
+            'best_payout': self.best_payout,
+            'worst_loss': self.worst_loss
         }
 
 class Bet:
@@ -384,6 +397,10 @@ def play_game():
                 print(f"win rate: {format_percentage(stats['win_rate'])}")
                 print(f"profit/loss: {format_profit_loss(stats['profit'])}")
                 print(f"max win streak: {stats['max_win_streak']} | max loss streak: {stats['max_loss_streak']}")
+                if stats['best_payout'] > 0:
+                    print(f"best bet payout: {format_currency(stats['best_payout'])}")
+                if stats['worst_loss'] > 0:
+                    print(f"worst bet loss: {format_currency(stats['worst_loss'])}")
                 display_separator()
                 
                 if stats['total_bets'] > 0:
@@ -478,6 +495,10 @@ def play_game():
                 print(f"current loss streak: {stats['current_loss_streak']}")
                 print(f"max win streak: {stats['max_win_streak']}")
                 print(f"max loss streak: {stats['max_loss_streak']}")
+                if stats['best_payout'] > 0:
+                    print(f"best bet: {format_currency(stats['best_payout'])}")
+                if stats['worst_loss'] > 0:
+                    print(f"worst bet: {format_currency(stats['worst_loss'])}")
                 display_separator()
                 continue
             
