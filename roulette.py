@@ -58,6 +58,10 @@ class Player:
         self.bet_history = []
         self.wins = 0
         self.losses = 0
+        self.current_win_streak = 0
+        self.current_loss_streak = 0
+        self.max_win_streak = 0
+        self.max_loss_streak = 0
     
     def get_balance(self):
         return self.balance
@@ -77,8 +81,16 @@ class Player:
         })
         if won:
             self.wins += 1
+            self.current_win_streak += 1
+            self.current_loss_streak = 0
+            if self.current_win_streak > self.max_win_streak:
+                self.max_win_streak = self.current_win_streak
         else:
             self.losses += 1
+            self.current_loss_streak += 1
+            self.current_win_streak = 0
+            if self.current_loss_streak > self.max_loss_streak:
+                self.max_loss_streak = self.current_loss_streak
     
     def get_bet_history(self):
         return self.bet_history
@@ -92,7 +104,11 @@ class Player:
             'losses': self.losses,
             'total_bets': total_bets,
             'win_rate': win_rate,
-            'profit': profit
+            'profit': profit,
+            'current_win_streak': self.current_win_streak,
+            'current_loss_streak': self.current_loss_streak,
+            'max_win_streak': self.max_win_streak,
+            'max_loss_streak': self.max_loss_streak
         }
 
 class Bet:
@@ -356,6 +372,7 @@ def play_game():
                 print(f"wins: {stats['wins']} | losses: {stats['losses']}")
                 print(f"win rate: {format_percentage(stats['win_rate'])}")
                 print(f"profit/loss: {format_profit_loss(stats['profit'])}")
+                print(f"max win streak: {stats['max_win_streak']} | max loss streak: {stats['max_loss_streak']}")
                 display_separator()
                 
                 if stats['total_bets'] > 0:
@@ -446,6 +463,10 @@ def play_game():
                 print(f"total bets: {stats['total_bets']}")
                 print(f"win rate: {format_percentage(stats['win_rate'])}")
                 print(f"profit: {format_profit_loss(stats['profit'])}")
+                print(f"current win streak: {stats['current_win_streak']}")
+                print(f"current loss streak: {stats['current_loss_streak']}")
+                print(f"max win streak: {stats['max_win_streak']}")
+                print(f"max loss streak: {stats['max_loss_streak']}")
                 display_separator()
                 continue
             
