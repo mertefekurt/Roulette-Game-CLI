@@ -8,6 +8,7 @@ A simple command-line roulette game built with Python.
 - Track your balance
 - Simple and interactive gameplay
 - Quickly repeat your last bet
+- Automatic save on exit with prompt to resume saved games
 
 ## How to Run
 

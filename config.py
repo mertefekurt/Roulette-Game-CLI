@@ -1,4 +1,5 @@
 MINIMUM_BET = 10
+MAXIMUM_BET = 10000
 INITIAL_BALANCE = 1000
 LOW_BALANCE_WARNING = 100
 CRITICAL_BALANCE_WARNING = 50
@@ -19,6 +20,7 @@ PAYOUT_MULTIPLIERS = {
     'odd': 2,
     'even': 2,
     'high': 2,
-    'low': 2
+    'low': 2,
+    'dozen': 3
 }
 

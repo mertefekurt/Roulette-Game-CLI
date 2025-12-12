@@ -10,6 +10,13 @@ def save_game_state(player):
         'initial_balance': player.initial_balance,
         'wins': player.wins,
         'losses': player.losses,
+        'current_win_streak': player.current_win_streak,
+        'current_loss_streak': player.current_loss_streak,
+        'max_win_streak': player.max_win_streak,
+        'max_loss_streak': player.max_loss_streak,
+        'number_frequency': player.number_frequency,
+        'best_payout': player.best_payout,
+        'worst_loss': player.worst_loss,
         'bet_history': []
     }
     
@@ -44,6 +51,13 @@ def load_game_state(player):
         player.initial_balance = save_data.get('initial_balance', player.initial_balance)
         player.wins = save_data.get('wins', 0)
         player.losses = save_data.get('losses', 0)
+        player.current_win_streak = save_data.get('current_win_streak', 0)
+        player.current_loss_streak = save_data.get('current_loss_streak', 0)
+        player.max_win_streak = save_data.get('max_win_streak', 0)
+        player.max_loss_streak = save_data.get('max_loss_streak', 0)
+        player.number_frequency = save_data.get('number_frequency', {})
+        player.best_payout = save_data.get('best_payout', 0)
+        player.worst_loss = save_data.get('worst_loss', 0)
         player.bet_history = []
         
         class Bet:
@@ -75,6 +89,9 @@ def delete_save_file():
             print(f"error deleting save: {str(e)}")
             return False
     return False
+
+def save_exists():
+    return os.path.exists(SAVE_FILE)
 
 def save_to_leaderboard(player_name, final_balance, profit, total_bets, win_rate):
     leaderboard = load_leaderboard()
