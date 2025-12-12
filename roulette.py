@@ -10,6 +10,7 @@ from utils import (
     format_currency, format_percentage, format_profit_loss
 )
 from storage import save_game_state, load_game_state, delete_save_file, save_to_leaderboard, display_leaderboard, export_statistics
+from strategies import get_strategy_from_user, BettingStrategy
 
 def spin_wheel():
     return random.randint(0, 36)
@@ -126,6 +127,7 @@ def display_menu():
     print("9. load game")
     print("a. view leaderboard")
     print("b. export statistics to file")
+    print("c. set betting strategy")
     print("0. quit")
 
 def get_multiple_bets():
@@ -197,37 +199,47 @@ def get_multiple_bets():
     
     return bets
 
-def get_bet_from_user():
-    choice = input("select bet type (0-9, a-b): ").strip().lower()
+def get_bet_from_user(strategy=None):
+    choice = input("select bet type (0-9, a-c): ").strip().lower()
     
     if choice == "0":
         return None
     
-    if choice in ["5", "6", "7", "8", "9", "a", "b"]:
+    if choice in ["5", "6", "7", "8", "9", "a", "b", "c"]:
         return choice
     
     if choice not in ["1", "2", "3", "4"]:
         print("invalid choice")
         return None
     
-    print("\nquick bet amounts:")
-    print("a. $10  b. $50  c. $100  d. $500")
-    amount_input = input(f"enter bet amount or quick option (minimum ${MINIMUM_BET}): ").strip().lower()
-    
-    if amount_input in QUICK_BET_AMOUNTS:
-        amount = QUICK_BET_AMOUNTS[amount_input]
+    if strategy:
+        amount = strategy.get_bet_amount()
+        print(f"strategy '{strategy.name}' suggests: ${amount}")
+        use_strategy = input("use strategy amount? (yes/no): ").strip().lower()
+        if use_strategy not in ["yes", "y"]:
+            amount = None
     else:
-        try:
-            amount = int(amount_input)
-            if amount < MINIMUM_BET:
-                print(f"bet amount must be at least ${MINIMUM_BET}")
+        amount = None
+    
+    if amount is None:
+        print("\nquick bet amounts:")
+        print("a. $10  b. $50  c. $100  d. $500")
+        amount_input = input(f"enter bet amount or quick option (minimum ${MINIMUM_BET}): ").strip().lower()
+        
+        if amount_input in QUICK_BET_AMOUNTS:
+            amount = QUICK_BET_AMOUNTS[amount_input]
+        else:
+            try:
+                amount = int(amount_input)
+                if amount < MINIMUM_BET:
+                    print(f"bet amount must be at least ${MINIMUM_BET}")
+                    return None
+                if amount <= 0:
+                    print("bet amount must be positive")
+                    return None
+            except ValueError:
+                print("invalid bet amount")
                 return None
-            if amount <= 0:
-                print("bet amount must be positive")
-                return None
-        except ValueError:
-            print("invalid bet amount")
-            return None
     
     if choice == "1":
         number = input("enter number (0-36): ").strip()
@@ -269,6 +281,7 @@ def check_balance_warnings(balance):
 
 def play_game():
     player = Player()
+    strategy = None
     
     try:
         while True:
@@ -278,11 +291,13 @@ def play_game():
             
             balance = player.get_balance()
             print(f"\ncurrent balance: ${balance}")
+            if strategy:
+                print(f"active strategy: {strategy.name} (next bet: ${strategy.get_bet_amount()})")
             check_balance_warnings(balance)
             display_menu()
             
             try:
-                bet = get_bet_from_user()
+                bet = get_bet_from_user(strategy)
             except KeyboardInterrupt:
                 print("\n\ngame interrupted. thanks for playing!")
                 return False
@@ -426,6 +441,14 @@ def play_game():
                     print("failed to export statistics")
                 continue
             
+            if bet == "c":
+                strategy = get_strategy_from_user()
+                if strategy:
+                    print(f"strategy '{strategy.name}' activated!")
+                else:
+                    print("strategy disabled")
+                continue
+            
             if bet.amount > player.get_balance():
                 print("insufficient balance")
                 continue
@@ -453,8 +476,12 @@ def play_game():
             if won:
                 print(f"you win ${payout}!")
                 player.add_balance(payout)
+                if strategy:
+                    strategy.on_win()
             else:
                 print("you lose!")
+                if strategy:
+                    strategy.on_loss()
             display_separator()
             
             player.add_bet_to_history(bet, winning_number, won, payout)
