@@ -12,6 +12,7 @@ from utils import (
 from storage import save_game_state, load_game_state, delete_save_file, save_to_leaderboard, display_leaderboard, export_statistics
 from strategies import get_strategy_from_user, BettingStrategy
 from achievements import check_achievements, display_achievements
+from calculator import display_calculator, compare_bet_types
 
 def spin_wheel():
     return random.randint(0, 36)
@@ -130,6 +131,7 @@ def display_menu():
     print("b. export statistics to file")
     print("c. set betting strategy")
     print("d. view achievements")
+    print("e. betting calculator")
     print("0. quit")
 
 def get_multiple_bets():
@@ -202,12 +204,12 @@ def get_multiple_bets():
     return bets
 
 def get_bet_from_user(strategy=None):
-    choice = input("select bet type (0-9, a-d): ").strip().lower()
+    choice = input("select bet type (0-9, a-e): ").strip().lower()
     
     if choice == "0":
         return None
     
-    if choice in ["5", "6", "7", "8", "9", "a", "b", "c", "d"]:
+    if choice in ["5", "6", "7", "8", "9", "a", "b", "c", "d", "e"]:
         return choice
     
     if choice not in ["1", "2", "3", "4"]:
@@ -453,6 +455,10 @@ def play_game():
             
             if bet == "d":
                 display_achievements()
+                continue
+            
+            if bet == "e":
+                display_calculator()
                 continue
             
             if bet.amount > player.get_balance():
