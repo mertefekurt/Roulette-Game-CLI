@@ -55,6 +55,7 @@ class Player:
         self.bet_history = []
         self.wins = 0
         self.losses = 0
+        self.last_bet = None
     
     def get_balance(self):
         return self.balance
@@ -116,13 +117,15 @@ def calculate_payout(bet, winning_number):
     multiplier = PAYOUT_MULTIPLIERS.get(bet.bet_type, 2)
     return bet.amount * multiplier
 
-def display_menu():
+def display_menu(player=None):
     print("\nbetting options:")
     print("1. number (0-36) - payout: 36x")
     print("2. color (red/black) - payout: 2x")
     print("3. odd/even - payout: 2x")
     print("4. high/low - payout: 2x")
     print("5. multiple bets (bet on multiple options)")
+    if player and player.last_bet:
+        print("r. repeat last bet")
     print("6. view statistics")
     print("7. view bet history")
     print("8. save game")
@@ -132,6 +135,7 @@ def display_menu():
     print("c. set betting strategy")
     print("d. view achievements")
     print("e. betting calculator")
+    print("f. view hot/cold numbers")
     print("0. quit")
 
 def get_multiple_bets():
@@ -203,13 +207,16 @@ def get_multiple_bets():
     
     return bets
 
-def get_bet_from_user(strategy=None):
-    choice = input("select bet type (0-9, a-e): ").strip().lower()
+def get_bet_from_user(strategy=None, last_bet=None):
+    choice = input("select bet type (0-9, a-f, r): ").strip().lower()
     
     if choice == "0":
         return None
     
-    if choice in ["5", "6", "7", "8", "9", "a", "b", "c", "d", "e"]:
+    if choice == "r" and last_bet:
+        return last_bet
+    
+    if choice in ["5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "r"]:
         return choice
     
     if choice not in ["1", "2", "3", "4"]:
@@ -283,6 +290,45 @@ def check_balance_warnings(balance):
     elif balance < LOW_BALANCE_WARNING:
         print("caution: balance is getting low")
 
+def display_hot_cold_numbers(player):
+    from utils import display_separator
+    
+    history = player.get_bet_history()
+    if not history:
+        display_separator()
+        print("no bet history yet - need at least one spin to show hot/cold numbers")
+        display_separator()
+        return
+    
+    number_frequency = {}
+    for h in history:
+        num = h['winning_number']
+        number_frequency[num] = number_frequency.get(num, 0) + 1
+    
+    sorted_numbers = sorted(number_frequency.items(), key=lambda x: x[1], reverse=True)
+    
+    display_separator()
+    print("hot/cold numbers (based on last spins):")
+    display_separator()
+    
+    if sorted_numbers:
+        hot_numbers = sorted_numbers[:5]
+        cold_numbers = sorted(sorted_numbers[-5:], key=lambda x: x[1])
+        
+        print("🔥 hot numbers (most frequent):")
+        for i, (num, count) in enumerate(hot_numbers, 1):
+            color = get_number_color(num)
+            print(f"  {i}. {num} ({color}) - appeared {count} time(s)")
+        
+        print("\n❄️  cold numbers (least frequent):")
+        for i, (num, count) in enumerate(cold_numbers, 1):
+            color = get_number_color(num)
+            print(f"  {i}. {num} ({color}) - appeared {count} time(s)")
+    else:
+        print("no data available")
+    
+    display_separator()
+
 def play_game():
     player = Player()
     strategy = None
@@ -298,10 +344,10 @@ def play_game():
             if strategy:
                 print(f"active strategy: {strategy.name} (next bet: ${strategy.get_bet_amount()})")
             check_balance_warnings(balance)
-            display_menu()
+            display_menu(player)
             
             try:
-                bet = get_bet_from_user(strategy)
+                bet = get_bet_from_user(strategy, player.last_bet)
             except KeyboardInterrupt:
                 print("\n\ngame interrupted. thanks for playing!")
                 return False
@@ -417,7 +463,7 @@ def play_game():
                 display_separator()
                 continue
             
-            if bet == "7":
+            if bet == "8":
                 if save_game_state(player):
                     print("game saved successfully!")
                 else:
@@ -461,6 +507,17 @@ def play_game():
                 display_calculator()
                 continue
             
+            if bet == "f":
+                display_hot_cold_numbers(player)
+                continue
+            
+            if bet == "r":
+                if not player.last_bet:
+                    print("no previous bet to repeat")
+                    continue
+                bet = player.last_bet
+                print(f"repeating last bet: {format_bet_description(bet)}")
+            
             if bet.amount > player.get_balance():
                 print("insufficient balance")
                 continue
@@ -497,6 +554,7 @@ def play_game():
             display_separator()
             
             player.add_bet_to_history(bet, winning_number, won, payout)
+            player.last_bet = bet
             
             stats = player.get_statistics()
             unlocked = check_achievements(player, stats, won)

@@ -57,14 +57,27 @@ class ConservativeStrategy(BettingStrategy):
         else:
             self.current_amount = self.base_amount
 
+class DAlembertStrategy(BettingStrategy):
+    def __init__(self, base_amount=MINIMUM_BET):
+        super().__init__("d'alembert", base_amount)
+    
+    def on_win(self):
+        super().on_win()
+        self.current_amount = max(MINIMUM_BET, self.current_amount - self.base_amount)
+    
+    def on_loss(self):
+        super().on_loss()
+        self.current_amount = self.current_amount + self.base_amount
+
 def get_strategy_from_user():
     print("\nbetting strategies:")
     print("1. martingale (double bet after loss)")
     print("2. fibonacci (fibonacci sequence)")
     print("3. conservative (reduce after 3 losses)")
-    print("4. none (manual betting)")
+    print("4. d'alembert (increase by base on loss, decrease on win)")
+    print("5. none (manual betting)")
     
-    choice = input("select strategy (1-4): ").strip()
+    choice = input("select strategy (1-5): ").strip()
     
     if choice == "1":
         base = input(f"enter base amount (default ${MINIMUM_BET}): ").strip()
@@ -93,6 +106,15 @@ def get_strategy_from_user():
         except ValueError:
             base_amount = MINIMUM_BET
         return ConservativeStrategy(base_amount)
+    elif choice == "4":
+        base = input(f"enter base amount (default ${MINIMUM_BET}): ").strip()
+        try:
+            base_amount = int(base) if base else MINIMUM_BET
+            if base_amount < MINIMUM_BET:
+                base_amount = MINIMUM_BET
+        except ValueError:
+            base_amount = MINIMUM_BET
+        return DAlembertStrategy(base_amount)
     else:
         return None
 
