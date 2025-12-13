@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import random
 from config import (
-    RED_NUMBERS, BLACK_NUMBERS, MINIMUM_BET, INITIAL_BALANCE,
+    RED_NUMBERS, BLACK_NUMBERS, MINIMUM_BET, MAXIMUM_BET, INITIAL_BALANCE,
     LOW_BALANCE_WARNING, CRITICAL_BALANCE_WARNING, QUICK_BET_AMOUNTS,
     PAYOUT_MULTIPLIERS
 )
@@ -167,6 +167,9 @@ def get_multiple_bets():
                 if amount < MINIMUM_BET:
                     print(f"bet amount must be at least ${MINIMUM_BET}")
                     continue
+                if amount > MAXIMUM_BET:
+                    print(f"bet amount cannot exceed ${MAXIMUM_BET}")
+                    continue
             except ValueError:
                 print("invalid bet amount")
                 continue
@@ -240,17 +243,20 @@ def get_bet_from_user(strategy=None, last_bet=None):
         if amount_input in QUICK_BET_AMOUNTS:
             amount = QUICK_BET_AMOUNTS[amount_input]
         else:
-            try:
-                amount = int(amount_input)
-                if amount < MINIMUM_BET:
-                    print(f"bet amount must be at least ${MINIMUM_BET}")
-                    return None
-                if amount <= 0:
-                    print("bet amount must be positive")
-                    return None
-            except ValueError:
-                print("invalid bet amount")
+        try:
+            amount = int(amount_input)
+            if amount < MINIMUM_BET:
+                print(f"bet amount must be at least ${MINIMUM_BET}")
                 return None
+            if amount > MAXIMUM_BET:
+                print(f"bet amount cannot exceed ${MAXIMUM_BET}")
+                return None
+            if amount <= 0:
+                print("bet amount must be positive")
+                return None
+        except ValueError:
+            print("invalid bet amount")
+            return None
     
     if choice == "1":
         number = input("enter number (0-36): ").strip()
@@ -470,7 +476,7 @@ def play_game():
                     print("failed to save game")
                 continue
             
-            if bet == "8":
+            if bet == "9":
                 if load_game_state(player):
                     print("game loaded successfully!")
                 else:
@@ -524,6 +530,10 @@ def play_game():
             
             if bet.amount < MINIMUM_BET:
                 print(f"bet amount must be at least ${MINIMUM_BET}")
+                continue
+            
+            if bet.amount > MAXIMUM_BET:
+                print(f"bet amount cannot exceed ${MAXIMUM_BET}")
                 continue
             
             display_bet_summary(bet)
