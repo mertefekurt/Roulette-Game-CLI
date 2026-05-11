@@ -1,6 +1,17 @@
 from config import MINIMUM_BET
 
+def _read_base_amount():
+    """Read a strategy base amount and clamp it to the table minimum."""
+    base = input(f"enter base amount (default ${MINIMUM_BET}): ").strip()
+    try:
+        base_amount = int(base) if base else MINIMUM_BET
+    except ValueError:
+        return MINIMUM_BET
+    return max(base_amount, MINIMUM_BET)
+
 class BettingStrategy:
+    """Base betting strategy that tracks stake size and loss streaks."""
+
     def __init__(self, name, base_amount=None):
         if base_amount is None:
             base_amount = MINIMUM_BET
@@ -10,6 +21,7 @@ class BettingStrategy:
         self.consecutive_losses = 0
     
     def get_bet_amount(self):
+        """Return the next recommended bet amount."""
         return self.current_amount
     
     def on_win(self):
@@ -20,6 +32,8 @@ class BettingStrategy:
         self.consecutive_losses += 1
 
 class MartingaleStrategy(BettingStrategy):
+    """Double the bet amount after each loss."""
+
     def __init__(self, base_amount=MINIMUM_BET):
         super().__init__("martingale", base_amount)
     
@@ -28,6 +42,8 @@ class MartingaleStrategy(BettingStrategy):
         self.current_amount = self.base_amount * (2 ** self.consecutive_losses)
 
 class FibonacciStrategy(BettingStrategy):
+    """Advance through the Fibonacci sequence after losses."""
+
     def __init__(self, base_amount=MINIMUM_BET):
         super().__init__("fibonacci", base_amount)
         self.fib_sequence = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144]
@@ -47,6 +63,8 @@ class FibonacciStrategy(BettingStrategy):
         self.fib_index = min(len(self.fib_sequence) - 1, self.fib_index + 1)
 
 class ConservativeStrategy(BettingStrategy):
+    """Reduce risk after several consecutive losses."""
+
     def __init__(self, base_amount=MINIMUM_BET):
         super().__init__("conservative", base_amount)
     
@@ -58,6 +76,8 @@ class ConservativeStrategy(BettingStrategy):
             self.current_amount = self.base_amount
 
 class DAlembertStrategy(BettingStrategy):
+    """Increase after losses and decrease after wins by one base unit."""
+
     def __init__(self, base_amount=MINIMUM_BET):
         super().__init__("d'alembert", base_amount)
     
@@ -70,6 +90,7 @@ class DAlembertStrategy(BettingStrategy):
         self.current_amount = self.current_amount + self.base_amount
 
 def get_strategy_from_user():
+    """Prompt the player for a betting strategy and base amount."""
     print("\nbetting strategies:")
     print("1. martingale (double bet after loss)")
     print("2. fibonacci (fibonacci sequence)")
@@ -80,41 +101,11 @@ def get_strategy_from_user():
     choice = input("select strategy (1-5): ").strip()
     
     if choice == "1":
-        base = input(f"enter base amount (default ${MINIMUM_BET}): ").strip()
-        try:
-            base_amount = int(base) if base else MINIMUM_BET
-            if base_amount < MINIMUM_BET:
-                base_amount = MINIMUM_BET
-        except ValueError:
-            base_amount = MINIMUM_BET
-        return MartingaleStrategy(base_amount)
-    elif choice == "2":
-        base = input(f"enter base amount (default ${MINIMUM_BET}): ").strip()
-        try:
-            base_amount = int(base) if base else MINIMUM_BET
-            if base_amount < MINIMUM_BET:
-                base_amount = MINIMUM_BET
-        except ValueError:
-            base_amount = MINIMUM_BET
-        return FibonacciStrategy(base_amount)
-    elif choice == "3":
-        base = input(f"enter base amount (default ${MINIMUM_BET}): ").strip()
-        try:
-            base_amount = int(base) if base else MINIMUM_BET
-            if base_amount < MINIMUM_BET:
-                base_amount = MINIMUM_BET
-        except ValueError:
-            base_amount = MINIMUM_BET
-        return ConservativeStrategy(base_amount)
-    elif choice == "4":
-        base = input(f"enter base amount (default ${MINIMUM_BET}): ").strip()
-        try:
-            base_amount = int(base) if base else MINIMUM_BET
-            if base_amount < MINIMUM_BET:
-                base_amount = MINIMUM_BET
-        except ValueError:
-            base_amount = MINIMUM_BET
-        return DAlembertStrategy(base_amount)
-    else:
-        return None
-
+        return MartingaleStrategy(_read_base_amount())
+    if choice == "2":
+        return FibonacciStrategy(_read_base_amount())
+    if choice == "3":
+        return ConservativeStrategy(_read_base_amount())
+    if choice == "4":
+        return DAlembertStrategy(_read_base_amount())
+    return None

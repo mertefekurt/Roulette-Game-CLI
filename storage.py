@@ -5,6 +5,7 @@ SAVE_FILE = "game_save.json"
 LEADERBOARD_FILE = "leaderboard.json"
 
 def save_game_state(player):
+    """Persist the current player state to disk."""
     save_data = {
         'balance': player.get_balance(),
         'initial_balance': player.initial_balance,
@@ -40,6 +41,7 @@ def save_game_state(player):
         return False
 
 def load_game_state(player):
+    """Load saved player state from disk into an existing player object."""
     if not os.path.exists(SAVE_FILE):
         return False
     
@@ -61,6 +63,8 @@ def load_game_state(player):
         player.bet_history = []
         
         class Bet:
+            """Minimal bet record used to restore serialized history."""
+
             def __init__(self, bet_type, value, amount):
                 self.bet_type = bet_type
                 self.value = value
@@ -81,6 +85,7 @@ def load_game_state(player):
         return False
 
 def delete_save_file():
+    """Delete the local save file when it exists."""
     if os.path.exists(SAVE_FILE):
         try:
             os.remove(SAVE_FILE)
@@ -91,9 +96,11 @@ def delete_save_file():
     return False
 
 def save_exists():
+    """Return whether a save file exists."""
     return os.path.exists(SAVE_FILE)
 
 def save_to_leaderboard(player_name, final_balance, profit, total_bets, win_rate):
+    """Add one leaderboard entry and keep the top ten by final balance."""
     leaderboard = load_leaderboard()
     
     entry = {
@@ -117,6 +124,7 @@ def save_to_leaderboard(player_name, final_balance, profit, total_bets, win_rate
         return False
 
 def load_leaderboard():
+    """Load leaderboard entries from disk."""
     if not os.path.exists(LEADERBOARD_FILE):
         return []
     
@@ -128,6 +136,7 @@ def load_leaderboard():
         return []
 
 def display_leaderboard():
+    """Print leaderboard entries in ranked order."""
     leaderboard = load_leaderboard()
     if not leaderboard:
         print("no leaderboard entries yet")
@@ -142,6 +151,7 @@ def display_leaderboard():
     display_separator()
 
 def export_statistics(player, filename="statistics.txt"):
+    """Export the current session statistics and history to a text file."""
     stats = player.get_statistics()
     history = player.get_bet_history()
     
@@ -174,4 +184,3 @@ def export_statistics(player, filename="statistics.txt"):
     except Exception as e:
         print(f"error exporting statistics: {str(e)}")
         return False
-

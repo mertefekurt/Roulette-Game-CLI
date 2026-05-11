@@ -9,7 +9,8 @@ ACHIEVEMENTS = {
     'comeback': {'name': 'comeback', 'description': 'recover from balance below $100', 'unlocked': False}
 }
 
-def check_achievements(player, stats, last_bet_won=None):
+def check_achievements(player, stats, _last_bet_won=None):
+    """Unlock achievements that match the player's current session stats."""
     unlocked = []
     
     if stats['wins'] >= 1 and not ACHIEVEMENTS['first_win']['unlocked']:
@@ -52,7 +53,9 @@ def check_achievements(player, stats, last_bet_won=None):
     return unlocked
 
 def display_achievements():
+    """Print the current achievement unlock state."""
     from utils import display_separator
+
     display_separator()
     print("achievements:")
     display_separator()
@@ -65,6 +68,6 @@ def display_achievements():
     display_separator()
 
 def reset_achievements():
-    for key in ACHIEVEMENTS:
-        ACHIEVEMENTS[key]['unlocked'] = False
-
+    """Reset all achievements to their locked state."""
+    for achievement in ACHIEVEMENTS.values():
+        achievement['unlocked'] = False

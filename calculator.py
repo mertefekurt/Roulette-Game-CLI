@@ -1,10 +1,12 @@
 from config import PAYOUT_MULTIPLIERS
 
 def calculate_potential_payout(bet_type, bet_amount, bet_value=None):
+    """Return the gross payout for a bet type and amount."""
     multiplier = PAYOUT_MULTIPLIERS.get(bet_type, 2)
     return bet_amount * multiplier
 
 def display_calculator():
+    """Run the interactive payout calculator menu."""
     from utils import display_separator
     
     while True:
@@ -87,6 +89,7 @@ def display_calculator():
         input("press enter to continue...")
 
 def compare_bet_types(amount):
+    """Print payout and ROI comparisons for each supported bet category."""
     from utils import display_separator
     
     display_separator()
@@ -110,4 +113,3 @@ def compare_bet_types(amount):
         print(f"{bet_type:<15} {mult_str:<12} ${payout:<11} ${profit:<11} {roi:.1f}%")
     
     display_separator()
-

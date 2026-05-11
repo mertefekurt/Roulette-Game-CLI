@@ -1,52 +1,74 @@
 #!/usr/bin/env python3
 import random
-from config import (
-    RED_NUMBERS, BLACK_NUMBERS, MINIMUM_BET, MAXIMUM_BET, INITIAL_BALANCE,
-    LOW_BALANCE_WARNING, CRITICAL_BALANCE_WARNING, QUICK_BET_AMOUNTS,
-    PAYOUT_MULTIPLIERS
-)
-from utils import (
-    display_separator, format_bet_description, display_bet_summary,
-    format_currency, format_percentage, format_profit_loss
-)
-from storage import save_game_state, load_game_state, delete_save_file, save_to_leaderboard, display_leaderboard, export_statistics
-from strategies import get_strategy_from_user, BettingStrategy
+
 from achievements import check_achievements, display_achievements
-from calculator import display_calculator, compare_bet_types
+from calculator import display_calculator
+from config import (
+    BLACK_NUMBERS,
+    CRITICAL_BALANCE_WARNING,
+    INITIAL_BALANCE,
+    LOW_BALANCE_WARNING,
+    MAXIMUM_BET,
+    MINIMUM_BET,
+    PAYOUT_MULTIPLIERS,
+    QUICK_BET_AMOUNTS,
+    RED_NUMBERS,
+)
+from storage import (
+    delete_save_file,
+    display_leaderboard,
+    export_statistics,
+    load_game_state,
+    save_game_state,
+    save_to_leaderboard,
+)
+from strategies import get_strategy_from_user
+from utils import (
+    display_bet_summary,
+    display_separator,
+    format_bet_description,
+    format_currency,
+    format_percentage,
+    format_profit_loss,
+)
 
 def spin_wheel():
+    """Return a random roulette wheel number."""
     return random.randint(0, 36)
 
 def get_number_color(number):
+    """Return the roulette color for a wheel number."""
     if number == 0:
         return "green"
-    elif number in RED_NUMBERS:
+    if number in RED_NUMBERS:
         return "red"
-    else:
-        return "black"
+    return "black"
 
 def check_color_bet(winning_number, bet_color):
+    """Return whether a color bet wins for the wheel result."""
     if winning_number == 0:
         return False
     return get_number_color(winning_number) == bet_color.lower()
 
 def check_odd_even_bet(winning_number, bet_type):
+    """Return whether an odd/even bet wins for the wheel result."""
     if winning_number == 0:
         return False
     if bet_type == "odd":
         return winning_number % 2 == 1
-    else:
-        return winning_number % 2 == 0
+    return winning_number % 2 == 0
 
 def check_high_low_bet(winning_number, bet_type):
+    """Return whether a high/low bet wins for the wheel result."""
     if winning_number == 0:
         return False
     if bet_type == "low":
         return 1 <= winning_number <= 18
-    else:
-        return 19 <= winning_number <= 36
+    return 19 <= winning_number <= 36
 
 class Player:
+    """Track player balance, bet history, and session statistics."""
+
     def __init__(self, initial_balance=None):
         if initial_balance is None:
             initial_balance = INITIAL_BALANCE
@@ -60,6 +82,9 @@ class Player:
         self.current_loss_streak = 0
         self.max_win_streak = 0
         self.max_loss_streak = 0
+        self.number_frequency = {}
+        self.best_payout = 0
+        self.worst_loss = 0
     
     def get_balance(self):
         return self.balance
@@ -71,6 +96,7 @@ class Player:
         self.balance -= amount
     
     def add_bet_to_history(self, bet, winning_number, won, payout):
+        """Record a resolved bet and update aggregate counters."""
         self.bet_history.append({
             'bet': bet,
             'winning_number': winning_number,
@@ -79,16 +105,21 @@ class Player:
         })
         if won:
             self.wins += 1
+            self.best_payout = max(self.best_payout, payout)
             self.current_win_streak += 1
             self.current_loss_streak = 0
             if self.current_win_streak > self.max_win_streak:
                 self.max_win_streak = self.current_win_streak
         else:
             self.losses += 1
+            self.worst_loss = max(self.worst_loss, bet.amount)
             self.current_loss_streak += 1
             self.current_win_streak = 0
             if self.current_loss_streak > self.max_loss_streak:
                 self.max_loss_streak = self.current_loss_streak
+        self.number_frequency[winning_number] = (
+            self.number_frequency.get(winning_number, 0) + 1
+        )
     
     def get_bet_history(self):
         return self.bet_history
@@ -110,23 +141,27 @@ class Player:
         }
 
 class Bet:
+    """Represent a single roulette bet."""
+
     def __init__(self, bet_type, value, amount):
         self.bet_type = bet_type
         self.value = value
         self.amount = amount
 
 def check_bet_win(bet, winning_number):
+    """Return whether a bet wins against a wheel result."""
     if bet.bet_type == "number":
         return winning_number == bet.value
-    elif bet.bet_type == "color":
+    if bet.bet_type == "color":
         return check_color_bet(winning_number, bet.value)
-    elif bet.bet_type == "odd" or bet.bet_type == "even":
+    if bet.bet_type in ["odd", "even"]:
         return check_odd_even_bet(winning_number, bet.bet_type)
-    elif bet.bet_type == "high" or bet.bet_type == "low":
+    if bet.bet_type in ["high", "low"]:
         return check_high_low_bet(winning_number, bet.bet_type)
     return False
 
 def calculate_payout(bet, winning_number):
+    """Calculate the payout for a bet and result."""
     if not check_bet_win(bet, winning_number):
         return 0
     
@@ -155,6 +190,7 @@ def display_menu(player=None):
     print("0. quit")
 
 def get_multiple_bets():
+    """Collect multiple bets from the player before one spin."""
     bets = []
     total_amount = 0
     
@@ -259,20 +295,20 @@ def get_bet_from_user(strategy=None, last_bet=None):
         if amount_input in QUICK_BET_AMOUNTS:
             amount = QUICK_BET_AMOUNTS[amount_input]
         else:
-        try:
-            amount = int(amount_input)
-            if amount < MINIMUM_BET:
-                print(f"bet amount must be at least ${MINIMUM_BET}")
+            try:
+                amount = int(amount_input)
+                if amount < MINIMUM_BET:
+                    print(f"bet amount must be at least ${MINIMUM_BET}")
+                    return None
+                if amount > MAXIMUM_BET:
+                    print(f"bet amount cannot exceed ${MAXIMUM_BET}")
+                    return None
+                if amount <= 0:
+                    print("bet amount must be positive")
+                    return None
+            except ValueError:
+                print("invalid bet amount")
                 return None
-            if amount > MAXIMUM_BET:
-                print(f"bet amount cannot exceed ${MAXIMUM_BET}")
-                return None
-            if amount <= 0:
-                print("bet amount must be positive")
-                return None
-        except ValueError:
-            print("invalid bet amount")
-            return None
     
     if choice == "1":
         number = input("enter number (0-36): ").strip()
@@ -307,14 +343,14 @@ def get_bet_from_user(strategy=None, last_bet=None):
     return None
 
 def check_balance_warnings(balance):
+    """Display balance warnings when the player is near depletion."""
     if balance < CRITICAL_BALANCE_WARNING:
         print("warning: low balance!")
     elif balance < LOW_BALANCE_WARNING:
         print("caution: balance is getting low")
 
 def display_hot_cold_numbers(player):
-    from utils import display_separator
-    
+    """Display the most and least frequent wheel results in session history."""
     history = player.get_bet_history()
     if not history:
         display_separator()
@@ -352,6 +388,7 @@ def display_hot_cold_numbers(player):
     display_separator()
 
 def play_game():
+    """Run one roulette session until the player quits or loses balance."""
     player = Player()
     strategy = None
     
@@ -603,6 +640,7 @@ def play_game():
         return False
 
 def main():
+    """Start the CLI roulette game loop."""
     print("welcome to roulette!")
     
     while True:
@@ -622,4 +660,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
